@@ -87,7 +87,7 @@ vagrant-vbguest (0.30.0, global)
 ```
 $ vagrant up
 ```
-以下のようにマウントでいていないと表示される
+以下のようにマウントできていないと表示される
 ```
 umount: /mnt: not mounted
 ```
@@ -123,13 +123,137 @@ $ vagrant ssh
 $ sudo yum -y groupinstall "development tools"
 ```
 
-### PHPのインストール
+### Docker導入に必要なものをインストール
 ```
-$ sudo yum -y install epel-release wget
-$ sudo wget http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
-$ sudo rpm -Uvh remi-release-7.rpm
-$ sudo yum -y install --enablerepo=remi-php72 php php-pdo php-mysqlnd php-mbstring php-xml php-fpm php-common php-devel php-mysql unzip
-$ php v
+$ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+```
+
+### yumにリポジトリを追加
+```
+$ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+```
+
+### Dockerのインストール
+```
+$ sudo yum install -y docker-ce
+```
+バージョンを表示してインストールを確認
+```
+$ docker -v
+```
+成功時、以下のような表示が返る
+```
+Docker version 20.10.7, build f0df350
+```
+
+### Docker-Composeをインストール
+```
+sudo curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+```
+
+### 編集権限を変更
+```
+sudo chmod +x /usr/local/bin/docker-compose
+```
+インストールを確認
+```
+$ docker-compose --version
+```
+成功時、以下のような表示が返る
+```
+docker-compose version 1.16.1, build 6d1ac21
+```
+
+### 作業ディレクトリを /vagrant に移動
+```shell
+$cd /vagrant/
+```
+
+### Laradockをインストール
+```
+$ git clone https://github.com/laradock/laradock.git
+```
+
+### 作業ディレクトリをlaradock に移動
+```shell
+$ cd laradock
+```
+
+### .env.example をコピー
+```shell
+cp .env.example .env
+```
+
+### docker-compose.ymlを編集
+```
+version: '3.5'
+
+↓以下に編集
+
+version: '3.3'
+```
+
+### dockerグループの存在を確認
+```
+$ cat /etc/group | grep docker
+```
+以下のような表示があればdockerグループがある
+```
+docker:x:992
+```
+
+### vagrantユーザーをグループに追加
+```
+$ sudo usermod -aG docker $USER
+```
+vagrantユーザーの所属するグループを確認
+```
+$ groups $USER
+```
+成功時、以下のような表示が返る。
+```
+vagrant : vagrant docker
+```
+
+### ゲストOSに再接続して設定を反映
+```
+$ exit
+$ vagrant ssh
+```
+
+### Dockerを起動
+```
+$ sudo systemctl start docker
+```
+
+### コンテナイメージをビルド
+```
+$ docker-compose build workspace nginx apache2 mysql php-fpm
+```
+
+### コンテナを起動
+```
+$ docker-compose up -d apache2 workspace
+```
+
+### ゲストOSから切断
+```
+$ exit
+```
+
+### ホストOSにLaravelアプリケーションをダウンロード
+```
+$ composer create-project --prefer-dist laravel/laravel laravel_app "6.*"
+```
+
+### ゲストOSに接続
+```
+$ vagrant ssh
+```
+
+### アクセス時の設定を変更
+```
+
 ```
 
 ## 所感
